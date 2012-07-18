@@ -292,7 +292,7 @@ def requestHandler(config_hint, path_info, query_string):
         else:
             mimetype, content = getTile(layer, coord, extension)
 
-            if content is None:
+            if content is None or len(content) == 0:
                 layer = requestLayer(config_hint, path_info, True)
                 mimetype, content = getTile(layer, coord, extension)
 
