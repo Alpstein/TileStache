@@ -9,7 +9,7 @@ configuration file as a dictionary:
 
     {
       "cache": ...,
-      "layers": 
+      "layers":
       {
         "example-name":
         {
@@ -154,25 +154,25 @@ def _addRecentTile(layer, coord, format, body, age=300):
     """
     key = (layer, coord, format)
     due = time() + age
-    
+
     _recent_tiles['hash'][key] = body, due
     _recent_tiles['list'].append((key, due))
-    
+
     logging.debug('TileStache.Core._addRecentTile() added tile to recent tiles: %s', key)
-    
+
     # now look at the oldest keys and remove them if needed
     for (key, due_by) in _recent_tiles['list']:
         # new enough?
         if time() < due_by:
             break
-        
+
         logging.debug('TileStache.Core._addRecentTile() removed tile from recent tiles: %s', key)
-        
+
         try:
             _recent_tiles['list'].remove((key, due_by))
         except ValueError:
             pass
-        
+
         try:
             del _recent_tiles['hash'][key]
         except KeyError:
@@ -183,27 +183,27 @@ def _getRecentTile(layer, coord, format):
     """
     key = (layer, coord, format)
     body, use_by = _recent_tiles['hash'].get(key, (None, 0))
-    
+
     # non-existent?
     if body is None:
         return None
-    
+
     # new enough?
     if time() < use_by:
         logging.debug('TileStache.Core._addRecentTile() found tile in recent tiles: %s', key)
         return body
-    
+
     # too old
     try:
         del _recent_tiles['hash'][key]
     except KeyError:
         pass
-    
+
     return None
 
 class Metatile:
     """ Some basic characteristics of a metatile.
-    
+
         Properties:
         - rows: number of tile rows this metatile covers vertically.
         - columns: number of tile columns this metatile covers horizontally.
@@ -220,14 +220,14 @@ class Metatile:
 
     def isForReal(self):
         """ Return True if this is really a metatile with a buffer or multiple tiles.
-        
+
             A default 1x1 metatile with buffer=0 is not for real.
         """
         return self.buffer > 0 or self.rows > 1 or self.columns > 1
 
     def firstCoord(self, coord):
         """ Return a new coordinate for the upper-left corner of a metatile.
-        
+
             This is useful as a predictable way to refer to an entire metatile
             by one of its sub-tiles, currently needed to do locking correctly.
         """
@@ -235,17 +235,17 @@ class Metatile:
 
     def allCoords(self, coord):
         """ Return a list of coordinates for a complete metatile.
-        
+
             Results are guaranteed to be ordered left-to-right, top-to-bottom.
         """
         rows, columns = int(self.rows), int(self.columns)
-        
+
         # upper-left corner of coord's metatile
         row = rows * (int(coord.row) / rows)
         column = columns * (int(coord.column) / columns)
-        
+
         coords = []
-        
+
         for r in range(rows):
             for c in range(columns):
                 coords.append(Coordinate(row + r, column + c, coord.zoom))
@@ -254,7 +254,7 @@ class Metatile:
 
 class Layer:
     """ A Layer.
-    
+
         Required attributes:
 
           provider:
@@ -282,7 +282,7 @@ class Layer:
 
           bounds:
             Instance of Config.Bounds for limiting rendered tiles.
-          
+
           allowed_origin:
             Value for the Access-Control-Allow-Origin HTTP response header.
 
@@ -309,34 +309,36 @@ class Layer:
             assumed to be square, and Layer.render() will respond with an error
             if the rendered image is not this height.
     """
-    def __init__(self, config, projection, metatile, stale_lock_timeout=15, cache_lifespan=None, write_cache=True, allowed_origin=None, max_cache_age=None, redirects=None, preview_lat=37.80, preview_lon=-122.26, preview_zoom=10, preview_ext='png', bounds=None, tile_height=256):
+    def __init__(self, config, projection, metatile, stale_lock_timeout=15, cache_lifespan=None, write_cache=True, allowed_origin=None, max_cache_age=None, redirects=None, preview_lat=37.80, preview_lon=-122.26, preview_zoom=10, preview_ext='png', bounds=None, tile_height=256, fallback_layer=None):
         self.provider = None
         self.config = config
         self.projection = projection
         self.metatile = metatile
-        
+
         self.stale_lock_timeout = stale_lock_timeout
         self.cache_lifespan = cache_lifespan
         self.write_cache = write_cache
         self.allowed_origin = allowed_origin
         self.max_cache_age = max_cache_age
         self.redirects = redirects or dict()
-        
+
         self.preview_lat = preview_lat
         self.preview_lon = preview_lon
         self.preview_zoom = preview_zoom
         self.preview_ext = preview_ext
-        
+
         self.bounds = bounds
         self.dim = tile_height
-        
+
+        self.fallback_layer = fallback_layer
+
         self.bitmap_palette = None
         self.jpeg_options = {}
         self.png_options = {}
 
     def name(self):
         """ Figure out what I'm called, return a name if there is one.
-        
+
             Layer names are stored in the Configuration object, so
             config.layers must be inspected to find a matching name.
         """
@@ -350,34 +352,34 @@ class Layer:
         """ Return True if we have a real metatile and the provider is OK with it.
         """
         return self.metatile.isForReal() and hasattr(self.provider, 'renderArea')
-    
+
     def render(self, coord, format):
         """ Render a tile for a coordinate, return PIL Image-like object.
-        
+
             Perform metatile slicing here as well, if required, writing the
             full set of rendered tiles to cache as we go.
         """
         if self.bounds and self.bounds.excludes(coord):
             raise NoTileLeftBehind(Image.new('RGB', (self.dim, self.dim), (0x99, 0x99, 0x99)))
-        
+
         srs = self.projection.srs
         xmin, ymin, xmax, ymax = self.envelope(coord)
         width, height = self.dim, self.dim
-        
+
         provider = self.provider
         metatile = self.metatile
-        
+
         if self.doMetatile():
             # adjust render size and coverage for metatile
             xmin, ymin, xmax, ymax = self.metaEnvelope(coord)
             width, height = self.metaSize(coord)
 
             subtiles = self.metaSubtiles(coord)
-        
+
         if self.doMetatile() or hasattr(provider, 'renderArea'):
             # draw an area, defined in projected coordinates
             tile = provider.renderArea(width, height, srs, xmin, ymin, xmax, ymax, coord.zoom)
-        
+
         elif hasattr(provider, 'renderTile'):
             # draw a single tile
             width, height = self.dim, self.dim
@@ -391,18 +393,18 @@ class Layer:
 
         if hasattr(tile, 'size') and tile.size[1] != height:
             raise KnownUnknown('Your provider returned the wrong image size: %s instead of %d pixels tall.' % (repr(tile.size), self.dim))
-        
+
         if self.bitmap_palette:
             # this is where we apply the palette if there is one
 
             if format.lower() == 'png':
                 t_index = self.png_options.get('transparency', None)
                 tile = apply_palette(tile, self.bitmap_palette, t_index)
-        
+
         if self.doMetatile():
             # tile will be set again later
             tile, surtile = None, tile
-            
+
             for (other, x, y) in subtiles:
                 buff = StringIO()
                 bbox = (x, y, x + self.dim, y + self.dim)
@@ -412,32 +414,32 @@ class Layer:
 
                 if self.write_cache:
                     self.config.cache.save(body, self, other, format)
-                
+
                 if other == coord:
                     # the one that actually gets returned
                     tile = subtile
-                
+
                 _addRecentTile(self, other, format, body)
-        
+
         return tile
-    
+
     def envelope(self, coord):
         """ Projected rendering envelope (xmin, ymin, xmax, ymax) for a Coordinate.
         """
         ul = self.projection.coordinateProj(coord)
         lr = self.projection.coordinateProj(coord.down().right())
-        
+
         return min(ul.x, lr.x), min(ul.y, lr.y), max(ul.x, lr.x), max(ul.y, lr.y)
-    
+
     def metaEnvelope(self, coord):
         """ Projected rendering envelope (xmin, ymin, xmax, ymax) for a metatile.
         """
         # size of buffer expressed as fraction of tile size
         buffer = float(self.metatile.buffer) / self.dim
-        
+
         # full set of metatile coordinates
         coords = self.metatile.allCoords(coord)
-        
+
         # upper-left and lower-right expressed as fractional coordinates
         ul = coords[0].left(buffer).up(buffer)
         lr = coords[-1].right(1 + buffer).down(1 + buffer)
@@ -445,20 +447,20 @@ class Layer:
         # upper-left and lower-right expressed as projected coordinates
         ul = self.projection.coordinateProj(ul)
         lr = self.projection.coordinateProj(lr)
-        
+
         # new render area coverage in projected coordinates
         return min(ul.x, lr.x), min(ul.y, lr.y), max(ul.x, lr.x), max(ul.y, lr.y)
-    
+
     def metaSize(self, coord):
         """ Pixel width and height of full rendered image for a metatile.
         """
         # size of buffer expressed as fraction of tile size
         buffer = float(self.metatile.buffer) / self.dim
-        
+
         # new master image render size
         width = int(self.dim * (buffer * 2 + self.metatile.columns))
         height = int(self.dim * (buffer * 2 + self.metatile.rows))
-        
+
         return width, height
 
     def metaSubtiles(self, coord):
@@ -471,10 +473,10 @@ class Layer:
         for other in coords:
             r = other.row - coords[0].row
             c = other.column - coords[0].column
-            
+
             x = c * self.dim + self.metatile.buffer
             y = r * self.dim + self.metatile.buffer
-            
+
             subtiles.append((other, x, y))
 
         return subtiles
@@ -484,19 +486,19 @@ class Layer:
         """
         if hasattr(self.provider, 'getTypeByExtension'):
             return self.provider.getTypeByExtension(extension)
-        
+
         elif extension.lower() == 'png':
             return 'image/png', 'PNG'
-    
+
         elif extension.lower() == 'jpg':
             return 'image/jpeg', 'JPEG'
-    
+
         else:
             raise KnownUnknown('Unknown extension in configuration: "%s"' % extension)
 
     def setSaveOptionsJPEG(self, quality=None, optimize=None, progressive=None):
         """ Optional arguments are added to self.jpeg_options for pickup when saving.
-        
+
             More information about options:
                 http://www.pythonware.com/library/pil/handbook/format-jpeg.htm
         """
@@ -511,41 +513,41 @@ class Layer:
 
     def setSaveOptionsPNG(self, optimize=None, palette=None):
         """ Optional arguments are added to self.png_options for pickup when saving.
-        
+
             Palette argument is a URL relative to the configuration file,
             and it implies bits and optional transparency options.
-        
+
             More information about options:
                 http://www.pythonware.com/library/pil/handbook/format-png.htm
         """
         if optimize is not None:
             self.png_options['optimize'] = bool(optimize)
-        
+
         if palette is not None:
             palette = urljoin(self.config.dirpath, palette)
             palette, bits, t_index = load_palette(palette)
-            
+
             self.bitmap_palette, self.png_options['bits'] = palette, bits
-            
+
             if t_index is not None:
                 self.png_options['transparency'] = t_index
 
 class KnownUnknown(Exception):
     """ There are known unknowns. That is to say, there are things that we now know we don't know.
-    
+
         This exception gets thrown in a couple places where common mistakes are made.
     """
     pass
 
 class NoTileLeftBehind(Exception):
     """ Leave no tile in the cache.
-    
+
         This exception can be thrown in a provider to signal to
         TileStache.getTile() that the result tile should be returned,
         but not saved in a cache. Useful in cases where a full tileset
         is being rendered for static hosting, and you don't want millions
         of identical ocean tiles.
-        
+
         The one constructor argument is an instance of PIL.Image or
         some other object with a save() method, as would be returned
         by provider renderArea() or renderTile() methods.
@@ -556,7 +558,7 @@ class NoTileLeftBehind(Exception):
 
 class TheTileIsInAnotherCastle(Exception):
     """ Ask a client to look someplace else for a tile.
-    
+
         This exception can be thrown in a provider to signal
         to HTTP clients that a tile should be asked-for elsewhere.
     """
@@ -571,7 +573,7 @@ def _preview(layer):
     lat, lon = layer.preview_lat, layer.preview_lon
     zoom = layer.preview_zoom
     ext = layer.preview_ext
-    
+
     return """<!DOCTYPE html>
 <html>
 <head>
