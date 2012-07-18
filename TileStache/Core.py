@@ -308,6 +308,9 @@ class Layer:
             Height of tile in pixels, as a single integer. Tiles are generally
             assumed to be square, and Layer.render() will respond with an error
             if the rendered image is not this height.
+
+          fallback_layer:
+            A fallback layer to use, in case that this layer doesn't return a tile image.
     """
     def __init__(self, config, projection, metatile, stale_lock_timeout=15, cache_lifespan=None, write_cache=True, allowed_origin=None, max_cache_age=None, redirects=None, preview_lat=37.80, preview_lon=-122.26, preview_zoom=10, preview_ext='png', bounds=None, tile_height=256, fallback_layer=None):
         self.provider = None
