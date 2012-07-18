@@ -199,7 +199,7 @@ def mergePathInfo(layer, coord, extension):
     
     return '/%(layer)s/%(z)d/%(x)d/%(y)d.%(extension)s' % locals()
 
-def requestLayer(config, path_info):
+def requestLayer(config, path_info, use_fallback_layer=False):
     """ Return a Layer.
     
         Requires a configuration and PATH_INFO (e.g. "/example/0/0/0.png").
@@ -238,6 +238,12 @@ def requestLayer(config, path_info):
     
     if layername not in config.layers:
         raise Core.KnownUnknown('"%s" is not a layer I know about. Here are some that I do know about: %s.' % (layername, ', '.join(sorted(config.layers.keys()))))
+
+    if use_fallback_layer:
+        layername = config.layers[layername].fallback_layer
+
+    if layername not in config.layers:
+        raise Core.KnownUnknown('fallback_layer "%s" is not a layer I know about. Here are some that I do know about: %s.' % (layername, ', '.join(sorted(config.layers.keys()))))
     
     return config.layers[layername]
 
@@ -285,7 +291,11 @@ def requestHandler(config_hint, path_info, query_string):
         
         else:
             mimetype, content = getTile(layer, coord, extension)
-    
+
+            if content is None:
+                layer = requestLayer(config_hint, path_info, True)
+                mimetype, content = getTile(layer, coord, extension)
+
         if callback and 'json' in mimetype:
             mimetype, content = 'application/javascript; charset=utf-8', '%s(%s)' % (callback, content)
 
