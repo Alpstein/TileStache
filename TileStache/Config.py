@@ -372,7 +372,7 @@ def _parseConfigfileLayer(layer_dict, config, dirpath):
                 layer_kwargs['preview_' + key] = func(preview_dict[key])
 
     if 'fallback layer' in layer_dict:
-        layer_kwargs['fallback_layer'] = layer_dict['fallback_layer']
+        layer_kwargs['fallback_layer'] = layer_dict['fallback layer']
 
     #
     # Do the bounds
