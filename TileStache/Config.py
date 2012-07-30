@@ -371,7 +371,7 @@ def _parseConfigfileLayer(layer_dict, config, dirpath):
             if key in preview_dict:
                 layer_kwargs['preview_' + key] = func(preview_dict[key])
 
-    if 'fallback_layer' in layer_dict:
+    if 'fallback layer' in layer_dict:
         layer_kwargs['fallback_layer'] = layer_dict['fallback_layer']
 
     #

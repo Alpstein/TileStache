@@ -25,6 +25,7 @@ configuration file as a dictionary:
           "maximum cache age": ...,
           "redirects": ...,
           "tile height": ...,
+          "fallback layer": ...,
           "jpeg options": ...,
           "png options": ...
         }
@@ -69,6 +70,8 @@ configuration file as a dictionary:
 - "tile height" gives the height of the image tile in pixels. You almost always
   want to leave this at the default value of 256, but you can use a value of 512
   to create double-size, double-resolution tiles for high-density phone screens.
+- "fallback layer" is an alternate layer to use if this layer doesn't return
+  a tile image.
 - "jpeg options" is an optional dictionary of JPEG creation options, passed
   through to PIL: http://www.pythonware.com/library/pil/handbook/format-jpeg.htm.
 - "png options" is an optional dictionary of PNG creation options, passed
