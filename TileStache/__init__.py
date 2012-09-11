@@ -297,7 +297,8 @@ def requestHandler(config_hint, path_info, query_string):
 
             if content is None or len(content) == 0:
                 layer = requestLayer(config_hint, path_info, True)
-                mimetype, content = getTile(layer, coord, extension)
+                if layer:
+                    mimetype, content = getTile(layer, coord, extension)
 
         if callback and 'json' in mimetype:
             mimetype, content = 'application/javascript; charset=utf-8', '%s(%s)' % (callback, content)
