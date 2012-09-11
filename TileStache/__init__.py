@@ -237,13 +237,16 @@ def requestLayer(config, path_info, use_fallback_layer=False):
     layername = splitPathInfo(path_info)[0]
     
     if layername not in config.layers:
-        raise Core.KnownUnknown('"%s" is not a layer I know about. Here are some that I do know about: %s.' % (layername, ', '.join(sorted(config.layers.keys()))))
+        raise Core.KnownUnknown('"%s" is not a layer I know about. ')
 
     if use_fallback_layer:
         layername = config.layers[layername].fallback_layer
 
+    if layername == None:
+        return None
+
     if layername not in config.layers:
-        raise Core.KnownUnknown('fallback_layer "%s" is not a layer I know about. Here are some that I do know about: %s.' % (layername, ', '.join(sorted(config.layers.keys()))))
+        raise Core.KnownUnknown('fallback_layer "%s" is not a layer I know about.')
     
     return config.layers[layername]
 
@@ -302,10 +305,7 @@ def requestHandler(config_hint, path_info, query_string):
     except Core.KnownUnknown, e:
         out = StringIO()
         
-        print >> out, 'Known unknown!'
         print >> out, e
-        print >> out, ''
-        print >> out, '\n'.join(Core._rummy())
         
         mimetype, content = 'text/plain', out.getvalue()
 
