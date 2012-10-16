@@ -35,6 +35,7 @@ MBTiles provider parameters:
   tileset:
     Required local file path to MBTiles tileset file, a SQLite 3 database file.
 """
+import logging
 from urlparse import urlparse, urljoin
 from os.path import exists
 
@@ -138,19 +139,20 @@ def tileset_info(filename):
     
     return info
 
-def list_tiles(filename):
+def list_tiles(filename, flip_y=False):
     """ Get a list of tile coordinates.
     """
     db = _connect(filename)
     db.text_factory = bytes
     
     tiles = db.execute('SELECT tile_row, tile_column, zoom_level FROM tiles')
-    tiles = (((2**z - 1) - y, x, z) for (y, x, z) in tiles) # Hello, Paul Ramsey.
+    if flip_y:
+        tiles = (((2**z - 1) - y, x, z) for (y, x, z) in tiles) # Hello, Paul Ramsey.
     tiles = [Coordinate(row, column, zoom) for (row, column, zoom) in tiles]
     
     return tiles
 
-def get_tile(filename, coord):
+def get_tile(filename, coord, flip_y=False):
     """ Retrieve the mime-type and raw content of a tile by coordinate.
     
         If the tile does not exist, None is returned for the content.
@@ -163,30 +165,36 @@ def get_tile(filename, coord):
     format = format and format[0] or None
     mime_type = formats[format]
     
-    tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
+    tile_row = coord.row
+    if flip_y:
+        tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
     q = 'SELECT tile_data FROM tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?'
     content = db.execute(q, (coord.zoom, coord.column, tile_row)).fetchone()
     content = content and content[0] or None
 
     return mime_type, content
 
-def delete_tile(filename, coord):
+def delete_tile(filename, coord, flip_y=False):
     """ Delete a tile by coordinate.
     """
     db = _connect(filename)
     db.text_factory = bytes
     
-    tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
+    tile_row = coord.row
+    if flip_y:
+        tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
     q = 'DELETE FROM tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?'
     db.execute(q, (coord.zoom, coord.column, tile_row))
 
-def put_tile(filename, coord, content):
+def put_tile(filename, coord, content, flip_y=False):
     """
     """
     db = _connect(filename)
     db.text_factory = bytes
     
-    tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
+    tile_row = coord.row
+    if flip_y:
+        tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
     q = 'REPLACE INTO tiles (zoom_level, tile_column, tile_row, tile_data) VALUES (?, ?, ?, ?)'
     db.execute(q, (coord.zoom, coord.column, tile_row, buffer(content)))
 
