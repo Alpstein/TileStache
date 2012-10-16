@@ -293,11 +293,13 @@ def requestHandler(config_hint, path_info, query_string):
             raise Core.TheTileIsInAnotherCastle(other_path_info)
         
         else:
+	    logging.debug("Trying layer '%s'" % (layer.name()))
             mimetype, content = getTile(layer, coord, extension)
 
             if content is None or len(content) == 0:
                 layer = requestLayer(config_hint, path_info, True)
-                if layer:
+	        logging.debug("Trying fallback layer '%s'" % (layer.name()))
+                if layer:                   
                     mimetype, content = getTile(layer, coord, extension)
 
         if callback and 'json' in mimetype:
