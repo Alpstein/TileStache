@@ -139,7 +139,7 @@ def tileset_info(filename):
     
     return info
 
-def list_tiles(filename, flip_y=False):
+def list_tiles(filename, flip_y=True):
     """ Get a list of tile coordinates.
     """
     db = _connect(filename)
@@ -152,7 +152,7 @@ def list_tiles(filename, flip_y=False):
     
     return tiles
 
-def get_tile(filename, coord, flip_y=False):
+def get_tile(filename, coord, flip_y=True):
     """ Retrieve the mime-type and raw content of a tile by coordinate.
     
         If the tile does not exist, None is returned for the content.
@@ -174,7 +174,7 @@ def get_tile(filename, coord, flip_y=False):
 
     return mime_type, content
 
-def delete_tile(filename, coord, flip_y=False):
+def delete_tile(filename, coord, flip_y=True):
     """ Delete a tile by coordinate.
     """
     db = _connect(filename)
@@ -186,7 +186,7 @@ def delete_tile(filename, coord, flip_y=False):
     q = 'DELETE FROM tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?'
     db.execute(q, (coord.zoom, coord.column, tile_row))
 
-def put_tile(filename, coord, content, flip_y=False):
+def put_tile(filename, coord, content, flip_y=True):
     """
     """
     db = _connect(filename)
