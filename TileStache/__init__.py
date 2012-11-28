@@ -298,8 +298,8 @@ def requestHandler(config_hint, path_info, query_string):
 
             if content is None or len(content) == 0:
                 layer = requestLayer(config_hint, path_info, True)
-	        logging.debug("Trying fallback layer '%s'" % (layer.name()))
                 if layer:                   
+                    logging.debug("Trying fallback layer '%s'" % (layer.name()))
                     mimetype, content = getTile(layer, coord, extension)
 
         if callback and 'json' in mimetype:
