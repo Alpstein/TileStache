@@ -136,6 +136,28 @@ def getProviderByName(name):
 
     raise Exception('Unknown provider name: "%s"' % name)
 
+class Verbatim:
+    ''' Wrapper for PIL.Image that saves raw input bytes if modes and formats match.
+    '''
+    def __init__(self, bytes):
+        self.buffer = StringIO(bytes)
+        self.image = Image.open(self.buffer)
+    
+    def convert(self, mode):
+        if mode == self.image.mode:
+            return self
+        else:
+            return self.image.convert(mode)
+
+    def crop(self, bbox):
+        return self.image.crop(bbox)
+    
+    def save(self, output, format):
+        if format == self.image.format:
+            output.write(self.buffer.getvalue())
+        else:
+            self.image.save(output, format)
+
 class Proxy:
     """ Proxy provider, to pass through and cache tiles from other places.
     
@@ -203,7 +225,7 @@ class Proxy:
         
         for url in urls:
             body = urllib.urlopen(url).read()
-            tile = Image.open(StringIO(body)).convert('RGBA')
+            tile = Verbatim(body)
 
             if len(urls) == 1:
                 #
@@ -255,7 +277,7 @@ class UrlTemplate:
 
         if 'referer' in config_dict:
             kwargs['referer'] = config_dict['referer']
-        
+
         return kwargs
     
     def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
@@ -273,6 +295,6 @@ class UrlTemplate:
             req.add_header('Referer', self.referer)
         
         body = urllib2.urlopen(req).read()
-        tile = Image.open(StringIO(body)).convert('RGBA')
+        tile = Verbatim(body)
 
         return tile
