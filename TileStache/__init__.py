@@ -108,9 +108,13 @@ def getTile(layer, coord, extension, ignore_cached=False):
                     save_kwargs = layer.png_options
                 else:
                     save_kwargs = {}
-                
-                tile.save(buff, format, **save_kwargs)
-                body = buff.getvalue()
+
+		if tile is None:
+                    body = None
+                    save = False
+                else:
+                    tile.save(buff, format, **save_kwargs)
+                    body = buff.getvalue()
                 
                 if save:
                     cache.save(body, layer, coord, format)
@@ -416,6 +420,9 @@ class WSGITileServer:
 
         try:
             mimetype, content = requestHandler(self.config, environ['PATH_INFO'], environ['QUERY_STRING'])
+
+            if content is None or len(content) == 0:
+                return self._response(start_response, '404 Not Found')
         
         except Core.TheTileIsInAnotherCastle, e:
             other_uri = environ['SCRIPT_NAME'] + e.path_info

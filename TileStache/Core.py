@@ -366,7 +366,8 @@ class Layer:
             full set of rendered tiles to cache as we go.
         """
         if self.bounds and self.bounds.excludes(coord):
-            raise NoTileLeftBehind(Image.new('RGB', (self.dim, self.dim), (0x99, 0x99, 0x99)))
+            # raise NoTileLeftBehind(Image.new('L', (self.dim, self.dim), (0xFF, 0xFF, 0xFF)))
+            raise NoTileLeftBehind(None)
 
         srs = self.projection.srs
         xmin, ymin, xmax, ymax = self.envelope(coord)
