@@ -58,6 +58,13 @@ def getTile(layer, coord, extension, ignore_cached=False):
     start_time = time()
     
     mimetype, format = layer.getTypeByExtension(extension)
+
+    if extension == 'meta':
+        try:
+            return mimetype, layer.tile_metadata(coord)
+        except Core.NoTileLeftBehind, e:
+            return mimetype, None
+
     cache = layer.config.cache
 
     if not ignore_cached:

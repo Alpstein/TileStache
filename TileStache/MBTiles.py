@@ -174,6 +174,23 @@ def get_tile(filename, coord, flip_y=True):
 
     return mime_type, content
 
+def get_tile_metadata(filename, coord, flip_y=True):
+    """ Retrieve metadata for a tile by coordinate.
+
+        If the tile does not exist, None is returned for the content.
+    """
+    db = _connect(filename)
+    db.text_factory = bytes
+
+    tile_row = coord.row
+    if flip_y:
+        tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
+    q = 'SELECT updated_at FROM tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?'
+    content = db.execute(q, (coord.zoom, coord.column, tile_row)).fetchone()
+    content = content and content[0] or None
+
+    return "{\"updated_at\": %d, \"zoom\": %d, \"x\": %d, \"y\": %d}" % (content, coord.zoom, coord.column, tile_row)
+
 def delete_tile(filename, coord, flip_y=True):
     """ Delete a tile by coordinate.
     """
@@ -224,6 +241,27 @@ class Provider:
         mime_type, content = get_tile(self.tileset, coord)
         formats = {'image/png': 'PNG', 'image/jpeg': 'JPEG', None: None}
         return TileResponse(formats[mime_type], content)
+
+    def tileMetadata(self, coord):
+        """ Retrieve metadata for a single tile, return a json-like object.
+        """
+        return get_tile_metadata(self.tileset, coord)
+
+    def getTypeByExtension(self, extension):
+        """ Get mime-type and PIL format by file extension.
+        """
+        if extension.lower() == 'meta':
+            return 'text/plain', None
+
+        elif extension.lower() == 'png':
+            return 'image/png', 'PNG'
+
+        elif extension.lower() == 'jpg':
+            return 'image/jpeg', 'JPEG'
+
+        else:
+            raise KnownUnknown('Unknown extension in configuration: "%s"' % extension)
+
 
 class TileResponse:
     """ Wrapper class for tile response that makes it behave like a PIL.Image object.

@@ -539,6 +539,22 @@ class Layer:
             if t_index is not None:
                 self.png_options['transparency'] = t_index
 
+    def tile_metadata(self, coord):
+        """ Tile metadata 
+        """
+
+        if self.bounds and self.bounds.excludes(coord):
+            raise NoTileLeftBehind(None)
+
+        if hasattr(self.provider, 'tileMetadata'):
+            metadata = self.provider.tileMetadata(coord)
+
+        else:
+            raise KnownUnknown('Your provider lacks the tileMetadata method.')
+
+        return metadata
+
+
 class KnownUnknown(Exception):
     """ There are known unknowns. That is to say, there are things that we now know we don't know.
 
