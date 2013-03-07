@@ -11,6 +11,7 @@ Built-in providers:
 - url template (UrlTemplate)
 - mbtiles (TileStache.MBTiles.Provider)
 - mapnik grid (Mapnik.GridProvider)
+- postgres (TileStache.Postgres.Provider)
 
 Example built-in provider, for JSON configuration file:
 
@@ -126,6 +127,10 @@ def getProviderByName(name):
         from . import MBTiles
         return MBTiles.Provider
 
+    elif name.lower() == 'postgres':
+        from . import Postgres
+        return Postgres.Provider
+
     elif name.lower() == 'mapnik grid':
         from . import Mapnik
         return Mapnik.GridProvider
@@ -134,7 +139,7 @@ def getProviderByName(name):
         from . import Sandwich
         return Sandwich.Provider
 
-    raise Exception('Unknown provider name: "%s"' % name)
+    raise Exception("Unknown provider name: '%s'" % name)
 
 class Verbatim:
     ''' Wrapper for PIL.Image that saves raw input bytes if modes and formats match.
