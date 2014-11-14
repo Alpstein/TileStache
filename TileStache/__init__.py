@@ -103,7 +103,7 @@ def getTile(layer, coord, extension, tile_scale, ignore_cached=False):
                 buff = StringIO()
 
                 try:
-                    tile = layer.render(coord, format)
+                    tile = layer.render(coord, format, tile_scale)
                     save = True
                 except Core.NoTileLeftBehind, e:
                     tile = e.tile
@@ -137,7 +137,7 @@ def getTile(layer, coord, extension, tile_scale, ignore_cached=False):
                 cache.unlock(layer, lockCoord, format)
     
     Core._addRecentTile(layer, coord, format, body, tile_scale)
-    # logging.info('TileStache.getTile() %s/%d/%d/%d.%s (scale %d) via %s in %.3f', layer.name(), coord.zoom, coord.column, coord.row, extension, tile_scale, tile_from, time() - start_time)
+    #logging.info('TileStache.getTile() %s/%d/%d/%d.%s (scale %d) via %s in %.3f', layer.name(), coord.zoom, coord.column, coord.row, extension, tile_scale, tile_from, time() - start_time)
     
     return mimetype, body
 
@@ -288,7 +288,7 @@ def requestHandler(config_hint, path_info, query_string):
             callback = None
         
         try:
-            tile_scale = Integer(query['scale'])
+            tile_scale = int(query['scale'][0])
         except:
             tile_scale = 1
 

@@ -93,11 +93,16 @@ class Provider:
         db = self.getconn()
         cursor = db.cursor()
 
+        tile_zoom = coord.zoom
+        tile_column = coord.column
         tile_row = coord.row
         if self.flip_y:
             tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
+
+	#logging.info("SELECT tile_data FROM tiles WHERE zoom_level=%d AND tile_column=%d AND tile_row=%d AND tile_scale=%d" % (tile_zoom, tile_column, tile_row, tile_scale))
+
         cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s AND tile_scale=%s',
-            (coord.zoom, coord.column, tile_row, tile_scale))
+            (tile_zoom, tile_column, tile_row, tile_scale))
         content = cursor.fetchone()
         content = content and content[0] or None
 
