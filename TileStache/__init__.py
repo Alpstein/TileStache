@@ -134,7 +134,7 @@ def getTile(layer, coord, extension, ignore_cached=False):
                 cache.unlock(layer, lockCoord, format)
     
     Core._addRecentTile(layer, coord, format, body)
-    logging.info('TileStache.getTile() %s/%d/%d/%d.%s via %s in %.3f', layer.name(), coord.zoom, coord.column, coord.row, extension, tile_from, time() - start_time)
+    # logging.info('TileStache.getTile() %s/%d/%d/%d.%s via %s in %.3f', layer.name(), coord.zoom, coord.column, coord.row, extension, tile_from, time() - start_time)
     
     return mimetype, body
 

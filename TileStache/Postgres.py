@@ -35,65 +35,23 @@ Postgres provider parameters:
 import logging
 from urlparse import urlparse, urljoin
 
+import sqlalchemy.pool as pool
 import psycopg2
 
 from ModestMaps.Core import Coordinate
 
-def get_tile(connect_string, coord, flip_y=True):
-    """ Retrieve the mime-type and raw content of a tile by coordinate.
-    
-        If the tile does not exist, None is returned for the content.
-    """
-    db = psycopg2.connect(connect_string)
-    db.autocommit = True
-
-    cursor = db.cursor()
-    
-    formats = {'png': 'image/png', 'jpg': 'image/jpeg', None: None}
-    cursor.execute("SELECT value FROM metadata WHERE name='format'")
-    format = cursor.fetchone()
-    format = format and format[0] or None
-    mime_type = formats[format]
-    
-    tile_row = coord.row
-    if flip_y:
-        tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
-    cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s',
-        (coord.zoom, coord.column, tile_row))
-    content = cursor.fetchone()
-    content = content and content[0] or None
-
-    db.close()
-
-    return mime_type, content
-
-def get_tile_metadata(filename, coord, flip_y=True):
-    """ Retrieve metadata for a tile by coordinate.
-
-        If the tile does not exist, None is returned for the content.
-    """
-    db = psycopg2.connect(connect_string)
-    db.autocommit = True
-
-    cursor = db.cursor()
-
-    tile_row = coord.row
-    if flip_y:
-        tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
-    cursor.execute('SELECT updated_at FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s',
-        (coord.zoom, coord.column, tile_row))
-    content = cursor.fetchone()
-    content = content and content[0] or None
-
-    db.close()
-
-    return "{\"updated_at\": %d, \"zoom\": %d, \"x\": %d, \"y\": %d}" % (content, coord.zoom, coord.column, tile_row)
 
 class Provider:
     """ MBTiles provider.
     
         See module documentation for explanation of constructor arguments.
     """
+
+    def getconn(self):
+        c = psycopg2.connect(self.tileset)
+        c.autocommit = True
+        return c
+
     def __init__(self, layer, tileset):
         """
         """        
@@ -102,7 +60,26 @@ class Provider:
         
         self.tileset = tileset
         self.layer = layer
-    
+        self.flip_y = True
+
+        #self.database = pool.QueuePool(self.getconn, max_overflow=1, pool_size=1)
+
+        #db = self.database.connect()
+        db = self.getconn()
+        cursor = db.cursor()
+
+        formats = {'png': 'image/png', 'jpg': 'image/jpeg', None: None}
+
+	try:
+            cursor.execute("SELECT value FROM metadata WHERE name='format'")
+            format = cursor.fetchone()
+            format = format and format[0] or None
+            self.mime_type = formats[format]
+        except:
+            raise Exception("Bad tileset '%s'" % (tileset,))
+
+        db.close()
+
     @staticmethod
     def prepareKeywordArgs(config_dict):
         """ Convert configured parameters to keyword args for __init__().
@@ -112,14 +89,41 @@ class Provider:
     def renderTile(self, width, height, srs, coord):
         """ Retrieve a single tile, return a TileResponse instance.
         """
-        mime_type, content = get_tile(self.tileset, coord)
+        #db = self.database.connect()
+        db = self.getconn()
+        cursor = db.cursor()
+
+        tile_row = coord.row
+        if self.flip_y:
+            tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
+        cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s AND tile_scale=1',
+            (coord.zoom, coord.column, tile_row))
+        content = cursor.fetchone()
+        content = content and content[0] or None
+
+        db.close()
+
         formats = {'image/png': 'PNG', 'image/jpeg': 'JPEG', None: None}
-        return TileResponse(formats[mime_type], content)
+        return TileResponse(formats[self.mime_type], content)
 
     def tileMetadata(self, coord):
         """ Retrieve metadata for a single tile, return a json-like object.
         """
-        return get_tile_metadata(self.tileset, coord)
+        #db = self.database.connect()
+        db = self.getconn()
+        cursor = db.cursor()
+
+        tile_row = coord.row
+        if self.flip_y:
+            tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
+        cursor.execute('SELECT updated_at FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s',
+            (coord.zoom, coord.column, tile_row))
+        content = cursor.fetchone()
+        content = content and content[0] or None
+
+        db.close()
+
+        return "{\"updated_at\": %d, \"zoom\": %d, \"x\": %d, \"y\": %d}" % (content, coord.zoom, coord.column, tile_row)
 
     def getTypeByExtension(self, extension):
         """ Get mime-type and PIL format by file extension.
