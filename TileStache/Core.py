@@ -152,10 +152,10 @@ from ModestMaps.Core import Coordinate
 
 _recent_tiles = dict(hash={}, list=[])
 
-def _addRecentTile(layer, coord, format, body, age=300):
+def _addRecentTile(layer, coord, format, body, tile_scale=1, age=300):
     """ Add the body of a tile to _recent_tiles with a timeout.
     """
-    key = (layer, coord, format)
+    key = (layer, coord, format, tile_scale)
     due = time() + age
 
     _recent_tiles['hash'][key] = body, due
@@ -181,10 +181,10 @@ def _addRecentTile(layer, coord, format, body, age=300):
         except KeyError:
             pass
 
-def _getRecentTile(layer, coord, format):
+def _getRecentTile(layer, coord, format, tile_scale=1):
     """ Return the body of a recent tile, or None if it's not there.
     """
-    key = (layer, coord, format)
+    key = (layer, coord, format, tile_scale)
     body, use_by = _recent_tiles['hash'].get(key, (None, 0))
 
     # non-existent?
@@ -359,7 +359,7 @@ class Layer:
         """
         return self.metatile.isForReal() and hasattr(self.provider, 'renderArea')
 
-    def render(self, coord, format):
+    def render(self, coord, format, tile_scale=1):
         """ Render a tile for a coordinate, return PIL Image-like object.
 
             Perform metatile slicing here as well, if required, writing the
@@ -385,12 +385,12 @@ class Layer:
 
         if self.doMetatile() or hasattr(provider, 'renderArea'):
             # draw an area, defined in projected coordinates
-            tile = provider.renderArea(width, height, srs, xmin, ymin, xmax, ymax, coord.zoom)
+            tile = provider.renderArea(width, height, srs, xmin, ymin, xmax, ymax, coord.zoom, tile_scale)
 
         elif hasattr(provider, 'renderTile'):
             # draw a single tile
             width, height = self.dim, self.dim
-            tile = provider.renderTile(width, height, srs, coord)
+            tile = provider.renderTile(width, height, srs, coord, tile_scale)
 
         else:
             raise KnownUnknown('Your provider lacks renderTile and renderArea methods.')

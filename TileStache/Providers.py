@@ -244,7 +244,7 @@ class Proxy:
         
         return kwargs
     
-    def renderTile(self, width, height, srs, coord):
+    def renderTile(self, width, height, srs, coord, tile_scale):
         """
         """
         if srs != Geography.SphericalMercator.srs:
@@ -313,7 +313,7 @@ class UrlTemplate:
 
         return kwargs
     
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom, tile_scale):
         """ Return an image for an area.
         
             Each argument (width, height, etc.) is substituted into the template.

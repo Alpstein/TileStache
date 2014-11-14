@@ -86,7 +86,7 @@ class Provider:
         """
         return {'tileset': config_dict['tileset']}
     
-    def renderTile(self, width, height, srs, coord):
+    def renderTile(self, width, height, srs, coord, tile_scale):
         """ Retrieve a single tile, return a TileResponse instance.
         """
         #db = self.database.connect()
@@ -96,8 +96,8 @@ class Provider:
         tile_row = coord.row
         if self.flip_y:
             tile_row = (2**coord.zoom - 1) - coord.row # Hello, Paul Ramsey.
-        cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s AND tile_scale=1',
-            (coord.zoom, coord.column, tile_row))
+        cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s AND tile_scale=%s',
+            (coord.zoom, coord.column, tile_row, tile_scale))
         content = cursor.fetchone()
         content = content and content[0] or None
 

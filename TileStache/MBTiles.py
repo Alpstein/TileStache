@@ -147,7 +147,7 @@ def list_tiles(filename, flip_y=True):
     
     return tiles
 
-def get_tile(filename, coord, flip_y=True):
+def get_tile(filename, coord, tile_scale, flip_y=True):
     """ Retrieve the mime-type and raw content of a tile by coordinate.
     
         If the tile does not exist, None is returned for the content.
@@ -236,10 +236,10 @@ class Provider:
         """
         return {'tileset': config_dict['tileset']}
     
-    def renderTile(self, width, height, srs, coord):
+    def renderTile(self, width, height, srs, coord, tile_scale):
         """ Retrieve a single tile, return a TileResponse instance.
         """
-        mime_type, content = get_tile(self.tileset, coord)
+        mime_type, content = get_tile(self.tileset, coord, tile_scale)
         formats = {'image/png': 'PNG', 'image/jpeg': 'JPEG', None: None}
         return TileResponse(formats[mime_type], content)
 

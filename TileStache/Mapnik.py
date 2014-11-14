@@ -96,7 +96,7 @@ class ImageProvider:
         
         return kwargs
     
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom, tile_scale):
         """
         """
         start_time = time()
@@ -222,7 +222,7 @@ class GridProvider:
         
         return kwargs
     
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom, tile_scale):
         """
         """
         start_time = time()

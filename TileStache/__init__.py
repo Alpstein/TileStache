@@ -43,7 +43,7 @@ import Config
 _pathinfo_pat = re.compile(r'^/?(?P<l>\w.+)/(?P<z>\d+)/(?P<x>-?\d+)/(?P<y>-?\d+)\.(?P<e>\w+)$')
 _preview_pat = re.compile(r'^/?(?P<l>\w.+)/(preview\.html)?$')
 
-def getTile(layer, coord, extension, ignore_cached=False):
+def getTile(layer, coord, extension, tile_scale, ignore_cached=False):
     """ Get a type string and tile binary for a given request layer tile.
     
         Arguments:
@@ -65,6 +65,9 @@ def getTile(layer, coord, extension, ignore_cached=False):
         except Core.NoTileLeftBehind, e:
             return mimetype, None
 
+    if tile_scale != 1:
+        ignore_cached = True # For now
+
     cache = layer.config.cache
 
     if not ignore_cached:
@@ -74,7 +77,7 @@ def getTile(layer, coord, extension, ignore_cached=False):
 
     else:
         # Then look in the bag of recent tiles.
-        body = Core._getRecentTile(layer, coord, format)
+        body = Core._getRecentTile(layer, coord, format, tile_scale)
         tile_from = 'recent tiles'
     
     # If no tile was found, dig deeper
@@ -116,7 +119,7 @@ def getTile(layer, coord, extension, ignore_cached=False):
                 else:
                     save_kwargs = {}
 
-		if tile is None:
+                if tile is None:
                     body = None
                     save = False
                 else:
@@ -133,8 +136,8 @@ def getTile(layer, coord, extension, ignore_cached=False):
                 # Always clean up a lock when it's no longer being used.
                 cache.unlock(layer, lockCoord, format)
     
-    Core._addRecentTile(layer, coord, format, body)
-    # logging.info('TileStache.getTile() %s/%d/%d/%d.%s via %s in %.3f', layer.name(), coord.zoom, coord.column, coord.row, extension, tile_from, time() - start_time)
+    Core._addRecentTile(layer, coord, format, body, tile_scale)
+    # logging.info('TileStache.getTile() %s/%d/%d/%d.%s (scale %d) via %s in %.3f', layer.name(), coord.zoom, coord.column, coord.row, extension, tile_scale, tile_from, time() - start_time)
     
     return mimetype, body
 
@@ -284,6 +287,11 @@ def requestHandler(config_hint, path_info, query_string):
         except KeyError:
             callback = None
         
+        try:
+            tile_scale = Integer(query['scale'])
+        except:
+            tile_scale = 1
+
         #
         # Special case for index page.
         #
@@ -304,14 +312,14 @@ def requestHandler(config_hint, path_info, query_string):
             raise Core.TheTileIsInAnotherCastle(other_path_info)
         
         else:
-	    logging.debug("Trying layer '%s'" % (layer.name()))
-            mimetype, content = getTile(layer, coord, extension)
+            logging.debug("Trying layer '%s'" % (layer.name()))
+            mimetype, content = getTile(layer, coord, extension, tile_scale)
 
             if content is None or len(content) == 0:
                 layer = requestLayer(config_hint, path_info, True)
                 if layer:                   
                     logging.debug("Trying fallback layer '%s'" % (layer.name()))
-                    mimetype, content = getTile(layer, coord, extension)
+                    mimetype, content = getTile(layer, coord, extension, tile_scale)
 
         if callback and 'json' in mimetype:
             mimetype, content = 'application/javascript; charset=utf-8', '%s(%s)' % (callback, content)

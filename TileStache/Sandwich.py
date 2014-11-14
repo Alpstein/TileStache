@@ -158,7 +158,7 @@ class Provider:
         """
         return {'stack': config_dict['stack']}
     
-    def renderTile(self, width, height, srs, coord):
+    def renderTile(self, width, height, srs, coord, tile_scale):
         
         rendered = draw_stack(self.stack, coord, self.config, dict())
         
