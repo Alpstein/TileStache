@@ -12,6 +12,7 @@ Built-in providers:
 - mbtiles (TileStache.MBTiles.Provider)
 - mapnik grid (Mapnik.GridProvider)
 - postgres (TileStache.Postgres.Provider)
+- mysql (TileStache.MySQL.Provider)
 
 Example built-in provider, for JSON configuration file:
 
@@ -130,6 +131,10 @@ def getProviderByName(name):
     elif name.lower() == 'postgres':
         from . import Postgres
         return Postgres.Provider
+
+    elif name.lower() == 'mysql':
+        from . import MySQL
+        return MySQL.Provider
 
     elif name.lower() == 'mapnik grid':
         from . import Mapnik
