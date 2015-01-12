@@ -58,7 +58,7 @@ class Provider:
         if tileset.find("dbname") < 0:
             raise Exception('Bad scheme in Postgres provider, must be a PostgreSQL connect string: "%s"' % tileset)
         
-        self.tileset = tileset
+        self.tileset = tileset.replace("driver=postgres", "").strip()
         self.layer = layer
         self.flip_y = True
 
@@ -76,7 +76,8 @@ class Provider:
             format = format and format[0] or None
             self.mime_type = formats[format]
         except:
-            raise Exception("Bad tileset '%s'" % (tileset,))
+            self.mime_type = 'image/png'
+            #raise Exception("Bad tileset '%s'" % (tileset,))
 
         db.close()
 
@@ -101,8 +102,13 @@ class Provider:
 
 	#logging.info("SELECT tile_data FROM tiles WHERE zoom_level=%d AND tile_column=%d AND tile_row=%d AND tile_scale=%d" % (tile_zoom, tile_column, tile_row, tile_scale))
 
-        cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s AND tile_scale=%s',
-            (tile_zoom, tile_column, tile_row, tile_scale))
+        try:
+            cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s AND tile_scale=%s',
+                (tile_zoom, tile_column, tile_row, tile_scale))
+        except:
+            cursor.execute('SELECT tile_data FROM tiles WHERE zoom_level=%s AND tile_column=%s AND tile_row=%s',
+                (tile_zoom, tile_column, tile_row))
+
         content = cursor.fetchone()
         content = content and content[0] or None
 
