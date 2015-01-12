@@ -75,7 +75,8 @@ class Provider:
             format = format and format[0] or None
             self.mime_type = formats[format]
         except:
-            raise Exception("Bad tileset '%s'" % (tileset,))
+            self.mime_type = 'image/png'
+            #raise Exception("Bad tileset '%s'" % (tileset,))
 
         db.close()
 
