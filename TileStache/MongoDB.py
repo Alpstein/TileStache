@@ -59,19 +59,20 @@ class Provider:
         self.connect_options = dict(option.split("=") for option in tileset.split(" "))
         self.layer = layer
         self.flip_y = True
+        self.mime_type = 'image/png'
 
-        db = self.getconn()
-        cursor = db[self.connect_options['dbname']]
-
-        formats = {'png': 'image/png', 'jpg': 'image/jpeg', None: None}
-
-	try:
-            self.mime_type = formats[cursor.metadata.find_one({"name" : "format"})["value"]]
-        except:
-            self.mime_type = 'image/png'
-            #raise Exception("Bad tileset '%s'" % (tileset,))
-
-        db.close()
+        #db = self.getconn()
+        #cursor = db[self.connect_options['dbname']]
+        #
+        #formats = {'png': 'image/png', 'jpg': 'image/jpeg', None: None}
+        #
+	#try:
+        #    self.mime_type = formats[cursor.metadata.find_one({"name" : "format"})["value"]]
+        #except:
+        #    self.mime_type = 'image/png'
+        #    #raise Exception("Bad tileset '%s'" % (tileset,))
+        #
+        #db.close()
 
     @staticmethod
     def prepareKeywordArgs(config_dict):
@@ -99,6 +100,7 @@ class Provider:
         content = content and content["d"] or None
 
         db.close()
+        db = None
 
         formats = {'image/png': 'PNG', 'image/jpeg': 'JPEG', None: None}
         return TileResponse(formats[self.mime_type], content)
@@ -119,6 +121,7 @@ class Provider:
         content = content and content["t"] or None
 
         db.close()
+        db = None
 
         return "{\"updated_at\": %d, \"zoom\": %d, \"x\": %d, \"y\": %d}" % (content, coord.zoom, coord.column, tile_row)
 
