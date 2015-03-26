@@ -119,7 +119,7 @@ class ImageProvider:
         
         img = Image.fromstring('RGBA', (width, height), img.tostring())
 
-        logging.error('Mapnik.renderArea: {"mapfile":"%s","z":%d,"x":%d,"y":%d,"time":%f}', self.mapfile, coord.zoom, coord.column, coord.row, time() - start_time)
+        logging.error('Mapnik.renderArea: {"ts":%.0f,"mapfile":"%s","z":%d,"x":%d,"y":%d,"time":%f}', start_time, self.mapfile, coord.zoom, coord.column, coord.row, time() - start_time)
         logging.debug('TileStache.Mapnik.ImageProvider.renderArea() %dx%d in %.3f from %s', width, height, time() - start_time, self.mapfile)
     
         return img
