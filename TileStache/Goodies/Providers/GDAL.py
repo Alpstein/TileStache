@@ -56,9 +56,11 @@ class Provider:
         self.resample = resamplings[resample]
         self.maskband = maskband
     
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, coord, tile_scale):
         """
         """
+        zoom = coord.zoom
+
         src_ds = gdal.Open(str(self.filename))
         driver = gdal.GetDriverByName('GTiff')
         

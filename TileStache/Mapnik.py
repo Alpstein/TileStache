@@ -96,7 +96,7 @@ class ImageProvider:
         
         return kwargs
     
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom, tile_scale):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, coord, tile_scale):
         """
         """
         start_time = time()
@@ -118,7 +118,8 @@ class ImageProvider:
             global_mapnik_lock.release()
         
         img = Image.fromstring('RGBA', (width, height), img.tostring())
-    
+
+        logging.error('Mapnik.renderArea: {"mapfile":"%s","z":%d,"x":%d,"y":%d,"time":%f}', self.mapfile, coord.zoom, coord.column, coord.row, time() - start_time)
         logging.debug('TileStache.Mapnik.ImageProvider.renderArea() %dx%d in %.3f from %s', width, height, time() - start_time, self.mapfile)
     
         return img
@@ -222,11 +223,13 @@ class GridProvider:
         
         return kwargs
     
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom, tile_scale):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, coord, tile_scale):
         """
         """
         start_time = time()
-        
+
+        zoom = coord.zoom        
+
         if self.mapnik is None:
             self.mapnik = get_mapnikMap(self.mapfile)
             logging.debug('TileStache.Mapnik.GridProvider.renderArea() %.3f to load %s', time() - start_time, self.mapfile)

@@ -323,11 +323,13 @@ class UrlTemplate:
 
         return kwargs
     
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom, tile_scale):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, coord, tile_scale):
         """ Return an image for an area.
         
             Each argument (width, height, etc.) is substituted into the template.
         """
+        zoom = coord.zoom
+
         mapping = {'width': width, 'height': height, 'srs': srs, 'zoom': zoom}
         mapping.update({'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax})
         

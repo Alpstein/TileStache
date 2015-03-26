@@ -1,4 +1,4 @@
-""" The core class bits of TileStache.
+""" The core class bits of TileStache
 
 Two important classes can be found here.
 
@@ -385,7 +385,7 @@ class Layer:
 
         if self.doMetatile() or hasattr(provider, 'renderArea'):
             # draw an area, defined in projected coordinates
-            tile = provider.renderArea(width, height, srs, xmin, ymin, xmax, ymax, coord.zoom, tile_scale)
+            tile = provider.renderArea(width, height, srs, xmin, ymin, xmax, ymax, coord, tile_scale)
 
         elif hasattr(provider, 'renderTile'):
             # draw a single tile

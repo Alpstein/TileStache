@@ -158,9 +158,11 @@ class UTM:
 
         self.font = font
         
-    def renderArea(self, width_, height_, srs, xmin_, ymin_, xmax_, ymax_, zoom):
+    def renderArea(self, width_, height_, srs, xmin_, ymin_, xmax_, ymax_, coord, tile_scale):
         """
         """
+        zoom = coord.zoom
+
         merc = Proj(srs)
         
         # use the center to figure out our UTM zone

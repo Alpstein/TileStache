@@ -34,9 +34,11 @@ class Provider (ImageProvider):
 
         ImageProvider.__init__(self, layer, mapfile, fonts)
 
-    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, zoom):
+    def renderArea(self, width, height, srs, xmin, ymin, xmax, ymax, coord, tile_scale):
         """ Mostly hand off functionality to Mapnik.ImageProvider.renderArea()
         """
+        zoom = coord.zoom
+
         if self.mapnik is None:
             self.mapnik = mapnik.Map(0, 0)
             load_map(self.mapnik, str(self.mapfile), self.workdir, cache_dir=self.workdir)
